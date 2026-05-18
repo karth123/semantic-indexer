@@ -12,7 +12,7 @@ import {
   FileText,
   Trash2,
 } from "lucide-react";
-import { pdfjsLib } from "@/lib/anchorwrite/pdfjs";
+import { getPdfjs } from "@/lib/anchorwrite/pdfjs";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { TagInput } from "@/components/anchorwrite/TagInput";
 import { exportTaggedPdf } from "@/lib/anchorwrite/exporter";
@@ -73,6 +73,7 @@ function AnchorWriteApp() {
   const loadPdfFromBytes = useCallback(async (bytes: ArrayBuffer, name: string) => {
     // pdf.js mutates the buffer; clone for safety
     const copy = bytes.slice(0);
+    const pdfjsLib = await getPdfjs();
     const doc = await pdfjsLib.getDocument({ data: new Uint8Array(copy) }).promise;
     setPdf(doc);
     setPdfBytes(bytes);
@@ -86,8 +87,7 @@ function AnchorWriteApp() {
     // Try to restore anchors from PDF metadata
     try {
       const meta = await doc.getMetadata();
-      // @ts-expect-error info is loosely typed
-      const subject: string | undefined = meta?.info?.Subject;
+      const subject: string | undefined = (meta?.info as { Subject?: string } | undefined)?.Subject;
       const restored = decodeMetadata(subject);
       if (restored) {
         setAnchors(restored);
