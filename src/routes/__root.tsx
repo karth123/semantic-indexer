@@ -72,14 +72,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "AnchorWrite" },
+      {
+        name: "description",
+        content:
+          "Add hidden semantic anchors to scanned handwritten PDFs so Ctrl+F works in any PDF reader.",
+      },
+      { name: "author", content: "AnchorWrite" },
+      { property: "og:title", content: "AnchorWrite" },
+      {
+        property: "og:description",
+        content: "Make scanned handwritten PDFs searchable, locally in your browser.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
