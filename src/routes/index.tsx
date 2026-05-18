@@ -249,20 +249,32 @@ function AnchorWriteApp() {
   };
 
   const onOverlayMouseMove = (e: React.MouseEvent) => {
-    if (!drawing.current || !overlayRef.current) return;
-    const rect = overlayRef.current.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    const { startX, startY } = drawing.current;
-    setDraftBox({
-      x: Math.min(startX, cx),
-      y: Math.min(startY, cy),
-      w: Math.abs(cx - startX),
-      h: Math.abs(cy - startY),
-    });
+    if (drawing.current && overlayRef.current) {
+      const rect = overlayRef.current.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const { startX, startY } = drawing.current;
+      setDraftBox({
+        x: Math.min(startX, cx),
+        y: Math.min(startY, cy),
+        w: Math.abs(cx - startX),
+        h: Math.abs(cy - startY),
+      });
+      return;
+    }
+    if (panning.current && containerRef.current) {
+      const dx = e.clientX - panning.current.startX;
+      const dy = e.clientY - panning.current.startY;
+      containerRef.current.scrollLeft = panning.current.scrollLeft - dx;
+      containerRef.current.scrollTop = panning.current.scrollTop - dy;
+    }
   };
 
   const onOverlayMouseUp = () => {
+    if (panning.current) {
+      panning.current = null;
+      setIsPanning(false);
+    }
     if (!drawing.current) return;
     drawing.current = null;
     if (draftBox && draftBox.w > 6 && draftBox.h > 6) {
