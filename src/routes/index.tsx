@@ -12,7 +12,7 @@ import {
   FileText,
   Trash2,
 } from "lucide-react";
-import { pdfjsLib } from "@/lib/anchorwrite/pdfjs";
+import { getPdfjs } from "@/lib/anchorwrite/pdfjs";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { TagInput } from "@/components/anchorwrite/TagInput";
 import { exportTaggedPdf } from "@/lib/anchorwrite/exporter";
