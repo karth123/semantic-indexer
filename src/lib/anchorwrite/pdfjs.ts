@@ -11,8 +11,11 @@ export async function getPdfjs(): Promise<typeof PdfjsLib> {
   if (!pdfjsPromise) {
     pdfjsPromise = (async () => {
       const pdfjs = await import("pdfjs-dist");
-      // @ts-expect-error - ?url import
-      const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+      const workerMod: { default: string } = await import(
+        // @ts-ignore - ?url import
+        "pdfjs-dist/build/pdf.worker.min.mjs?url"
+      );
+      const workerSrc = workerMod.default;
       pdfjs.GlobalWorkerOptions.workerSrc = workerSrc as unknown as string;
       return pdfjs;
     })();
