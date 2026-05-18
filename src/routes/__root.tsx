@@ -86,6 +86,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "AnchorWrite" },
+      { name: "description", content: "AnchorWrite helps you add  text anchors to your handwritten notes, to navigate the pdf easily, even if you forgot the layout!" },
+      { property: "og:description", content: "AnchorWrite helps you add  text anchors to your handwritten notes, to navigate the pdf easily, even if you forgot the layout!" },
+      { name: "twitter:description", content: "AnchorWrite helps you add  text anchors to your handwritten notes, to navigate the pdf easily, even if you forgot the layout!" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ZP37BTnACTZRUHSYPL6ryRUrQ3I2/social-images/social-1779109370746-ChatGPT_Image_May_18,_2026,_06_31_11_PM.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/ZP37BTnACTZRUHSYPL6ryRUrQ3I2/social-images/social-1779109370746-ChatGPT_Image_May_18,_2026,_06_31_11_PM.webp" },
     ],
     links: [
       {
