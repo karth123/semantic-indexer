@@ -487,6 +487,20 @@ function AnchorWriteApp() {
         </div>
       </header>
 
+      {sizeWarning && (
+        <div className="border-b border-border bg-muted/40 px-4 py-2 flex items-start gap-2 text-xs text-muted-foreground">
+          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span className="flex-1">{sizeWarning}</span>
+          <button
+            onClick={() => setSizeWarning(null)}
+            className="hover:text-foreground transition-colors"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Body */}
       <div className="flex-1 flex min-h-0">
         {/* Viewer area */}
@@ -498,13 +512,17 @@ function AnchorWriteApp() {
             className="relative shadow-sm rounded-sm bg-white"
             style={{ width: canvasSize.w || undefined }}
           >
-            <canvas ref={canvasRef} className="block rounded-sm" />
+            <canvas ref={canvasRef} className="block rounded-sm select-none pointer-events-none" />
             {/* Overlay */}
             <div
               ref={overlayRef}
               className={cn(
-                "absolute inset-0",
-                mode === "box" ? "cursor-crosshair" : "cursor-default",
+                "absolute inset-0 select-none",
+                mode === "box"
+                  ? "cursor-crosshair"
+                  : isPanning
+                    ? "cursor-grabbing"
+                    : "cursor-grab",
               )}
               onMouseDown={onOverlayMouseDown}
               onMouseMove={onOverlayMouseMove}
