@@ -364,10 +364,17 @@ function AnchorWriteApp() {
               <input type="file" accept="application/pdf" className="hidden" onChange={onFileChange} />
             </label>
             <p className="mt-4 text-xs text-muted-foreground">
-              Everything runs locally in your browser. No upload, no account.
+              Everything runs locally in your browser. Files up to 20 MB.
             </p>
+            {sizeWarning && (
+              <div className="mt-4 inline-flex items-start gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground text-left">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>{sizeWarning}</span>
+              </div>
+            )}
           </div>
         </main>
+        <LoadingOverlay show={isLoading} />
       </div>
     );
   }
