@@ -11,17 +11,23 @@ import {
   Download,
   FileText,
   Trash2,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { getPdfjs } from "@/lib/anchorwrite/pdfjs";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { TagInput } from "@/components/anchorwrite/TagInput";
 import { exportTaggedPdf } from "@/lib/anchorwrite/exporter";
 import { decodeMetadata } from "@/lib/anchorwrite/metadata";
+import { stripFirstPage } from "@/lib/anchorwrite/pdfTools";
 import { emptyAnchors, type AnchorData, type BoundingBox } from "@/lib/anchorwrite/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+
+const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB hard limit
+const WARN_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB warning
 
 export const Route = createFileRoute("/")({
   component: AnchorWriteApp,
