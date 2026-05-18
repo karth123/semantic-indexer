@@ -11,17 +11,23 @@ import {
   Download,
   FileText,
   Trash2,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { getPdfjs } from "@/lib/anchorwrite/pdfjs";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { TagInput } from "@/components/anchorwrite/TagInput";
 import { exportTaggedPdf } from "@/lib/anchorwrite/exporter";
 import { decodeMetadata } from "@/lib/anchorwrite/metadata";
+import { stripFirstPage } from "@/lib/anchorwrite/pdfTools";
 import { emptyAnchors, type AnchorData, type BoundingBox } from "@/lib/anchorwrite/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+
+const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB hard limit
+const WARN_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB warning
 
 export const Route = createFileRoute("/")({
   component: AnchorWriteApp,
@@ -58,6 +64,8 @@ function AnchorWriteApp() {
   const [zoom, setZoom] = useState(1); // multiplier on fit-to-width
   const [anchors, setAnchors] = useState<AnchorData>(emptyAnchors());
   const [mode, setMode] = useState<Mode>("view");
+  const [isLoading, setIsLoading] = useState(false);
+  const [sizeWarning, setSizeWarning] = useState<string | null>(null);
 
   // Active box being created or selected
   const [draftBox, setDraftBox] = useState<DraftBox | null>(null);
@@ -70,42 +78,77 @@ function AnchorWriteApp() {
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
 
   // Load PDF from bytes
-  const loadPdfFromBytes = useCallback(async (bytes: ArrayBuffer, name: string) => {
-    // pdf.js mutates the buffer; clone for safety
-    const copy = bytes.slice(0);
-    const pdfjsLib = await getPdfjs();
-    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(copy) }).promise;
-    setPdf(doc);
-    setPdfBytes(bytes);
-    setFileName(name);
-    setPage(1);
-    setZoom(1);
-    setSelectedBoxId(null);
-    setDraftBox(null);
-    setMode("view");
-
-    // Try to restore anchors from PDF metadata
+  const loadPdfFromBytes = useCallback(async (rawBytes: ArrayBuffer, name: string) => {
+    setIsLoading(true);
     try {
-      const meta = await doc.getMetadata();
-      const subject: string | undefined = (meta?.info as { Subject?: string } | undefined)?.Subject;
-      const restored = decodeMetadata(subject);
+      // Peek metadata first to know if there's a glossary page to strip
+      let workingBytes = rawBytes;
+      let restored: AnchorData | null = null;
+      try {
+        const peekCopy = rawBytes.slice(0);
+        const pdfjsLib = await getPdfjs();
+        const peekDoc = await pdfjsLib.getDocument({ data: new Uint8Array(peekCopy) }).promise;
+        const meta = await peekDoc.getMetadata();
+        const subject: string | undefined = (meta?.info as { Subject?: string } | undefined)?.Subject;
+        restored = decodeMetadata(subject);
+        await peekDoc.destroy();
+      } catch {
+        restored = null;
+      }
+
+      if (restored?.hasGlossary) {
+        // Drop the glossary page so the rendered document matches anchor page numbers
+        workingBytes = await stripFirstPage(rawBytes);
+      }
+
+      const copy = workingBytes.slice(0);
+      const pdfjsLib = await getPdfjs();
+      const doc = await pdfjsLib.getDocument({ data: new Uint8Array(copy) }).promise;
+
+      setPdf(doc);
+      setPdfBytes(workingBytes);
+      setFileName(name);
+      setPage(1);
+      setZoom(1);
+      setSelectedBoxId(null);
+      setDraftBox(null);
+      setMode("view");
+
       if (restored) {
         setAnchors(restored);
         toast.success("Restored existing AnchorWrite tags from this PDF");
       } else {
         setAnchors(emptyAnchors());
       }
-    } catch {
-      setAnchors(emptyAnchors());
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not open this PDF");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+
+    if (file.size > MAX_SIZE_BYTES) {
+      setSizeWarning(null);
+      toast.error("Files above 20 MB are currently unsupported for performance reasons.");
+      return;
+    }
+
+    if (file.size > WARN_SIZE_BYTES) {
+      setSizeWarning(
+        "Large PDFs may reduce performance. For best experience, use files under 10 MB.",
+      );
+    } else {
+      setSizeWarning(null);
+    }
+
     const buf = await file.arrayBuffer();
     await loadPdfFromBytes(buf, file.name);
-    e.target.value = "";
   };
 
   // Render page
@@ -173,32 +216,65 @@ function AnchorWriteApp() {
 
   // Box drawing handlers
   const drawing = useRef<{ startX: number; startY: number } | null>(null);
+  // Pan (hand-tool) handlers — active when mode === "view" and the user drags empty PDF area
+  const panning = useRef<{
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+  } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
 
   const onOverlayMouseDown = (e: React.MouseEvent) => {
-    if (mode !== "box" || !overlayRef.current) return;
-    const rect = overlayRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    drawing.current = { startX: x, startY: y };
-    setDraftBox({ x, y, w: 0, h: 0 });
-    setSelectedBoxId(null);
+    if (mode === "box") {
+      if (!overlayRef.current) return;
+      const rect = overlayRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      drawing.current = { startX: x, startY: y };
+      setDraftBox({ x, y, w: 0, h: 0 });
+      setSelectedBoxId(null);
+      return;
+    }
+    // View mode → start panning the scroll container
+    if (!containerRef.current) return;
+    panning.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollLeft: containerRef.current.scrollLeft,
+      scrollTop: containerRef.current.scrollTop,
+    };
+    setIsPanning(true);
+    e.preventDefault();
   };
 
   const onOverlayMouseMove = (e: React.MouseEvent) => {
-    if (!drawing.current || !overlayRef.current) return;
-    const rect = overlayRef.current.getBoundingClientRect();
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
-    const { startX, startY } = drawing.current;
-    setDraftBox({
-      x: Math.min(startX, cx),
-      y: Math.min(startY, cy),
-      w: Math.abs(cx - startX),
-      h: Math.abs(cy - startY),
-    });
+    if (drawing.current && overlayRef.current) {
+      const rect = overlayRef.current.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const { startX, startY } = drawing.current;
+      setDraftBox({
+        x: Math.min(startX, cx),
+        y: Math.min(startY, cy),
+        w: Math.abs(cx - startX),
+        h: Math.abs(cy - startY),
+      });
+      return;
+    }
+    if (panning.current && containerRef.current) {
+      const dx = e.clientX - panning.current.startX;
+      const dy = e.clientY - panning.current.startY;
+      containerRef.current.scrollLeft = panning.current.scrollLeft - dx;
+      containerRef.current.scrollTop = panning.current.scrollTop - dy;
+    }
   };
 
   const onOverlayMouseUp = () => {
+    if (panning.current) {
+      panning.current = null;
+      setIsPanning(false);
+    }
     if (!drawing.current) return;
     drawing.current = null;
     if (draftBox && draftBox.w > 6 && draftBox.h > 6) {
@@ -288,10 +364,17 @@ function AnchorWriteApp() {
               <input type="file" accept="application/pdf" className="hidden" onChange={onFileChange} />
             </label>
             <p className="mt-4 text-xs text-muted-foreground">
-              Everything runs locally in your browser. No upload, no account.
+              Everything runs locally in your browser. Files up to 20 MB.
             </p>
+            {sizeWarning && (
+              <div className="mt-4 inline-flex items-start gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground text-left">
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>{sizeWarning}</span>
+              </div>
+            )}
           </div>
         </main>
+        <LoadingOverlay show={isLoading} />
       </div>
     );
   }
@@ -404,6 +487,20 @@ function AnchorWriteApp() {
         </div>
       </header>
 
+      {sizeWarning && (
+        <div className="border-b border-border bg-muted/40 px-4 py-2 flex items-start gap-2 text-xs text-muted-foreground">
+          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <span className="flex-1">{sizeWarning}</span>
+          <button
+            onClick={() => setSizeWarning(null)}
+            className="hover:text-foreground transition-colors"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {/* Body */}
       <div className="flex-1 flex min-h-0">
         {/* Viewer area */}
@@ -415,13 +512,17 @@ function AnchorWriteApp() {
             className="relative shadow-sm rounded-sm bg-white"
             style={{ width: canvasSize.w || undefined }}
           >
-            <canvas ref={canvasRef} className="block rounded-sm" />
+            <canvas ref={canvasRef} className="block rounded-sm select-none pointer-events-none" />
             {/* Overlay */}
             <div
               ref={overlayRef}
               className={cn(
-                "absolute inset-0",
-                mode === "box" ? "cursor-crosshair" : "cursor-default",
+                "absolute inset-0 select-none",
+                mode === "box"
+                  ? "cursor-crosshair"
+                  : isPanning
+                    ? "cursor-grabbing"
+                    : "cursor-grab",
               )}
               onMouseDown={onOverlayMouseDown}
               onMouseMove={onOverlayMouseMove}
@@ -557,6 +658,22 @@ function AnchorWriteApp() {
             </div>
           </div>
         </aside>
+      </div>
+      <LoadingOverlay show={isLoading} />
+    </div>
+  );
+}
+
+function LoadingOverlay({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-background/95 px-6 py-5 shadow-lg">
+        <Loader2 className="h-5 w-5 animate-spin text-foreground" />
+        <div className="text-center">
+          <p className="text-sm font-medium">Loading PDF…</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Large PDFs may take longer.</p>
+        </div>
       </div>
     </div>
   );
