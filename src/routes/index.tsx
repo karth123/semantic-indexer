@@ -64,6 +64,8 @@ function AnchorWriteApp() {
   const [zoom, setZoom] = useState(1); // multiplier on fit-to-width
   const [anchors, setAnchors] = useState<AnchorData>(emptyAnchors());
   const [mode, setMode] = useState<Mode>("view");
+  const [isLoading, setIsLoading] = useState(false);
+  const [sizeWarning, setSizeWarning] = useState<string | null>(null);
 
   // Active box being created or selected
   const [draftBox, setDraftBox] = useState<DraftBox | null>(null);
@@ -76,42 +78,77 @@ function AnchorWriteApp() {
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
 
   // Load PDF from bytes
-  const loadPdfFromBytes = useCallback(async (bytes: ArrayBuffer, name: string) => {
-    // pdf.js mutates the buffer; clone for safety
-    const copy = bytes.slice(0);
-    const pdfjsLib = await getPdfjs();
-    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(copy) }).promise;
-    setPdf(doc);
-    setPdfBytes(bytes);
-    setFileName(name);
-    setPage(1);
-    setZoom(1);
-    setSelectedBoxId(null);
-    setDraftBox(null);
-    setMode("view");
-
-    // Try to restore anchors from PDF metadata
+  const loadPdfFromBytes = useCallback(async (rawBytes: ArrayBuffer, name: string) => {
+    setIsLoading(true);
     try {
-      const meta = await doc.getMetadata();
-      const subject: string | undefined = (meta?.info as { Subject?: string } | undefined)?.Subject;
-      const restored = decodeMetadata(subject);
+      // Peek metadata first to know if there's a glossary page to strip
+      let workingBytes = rawBytes;
+      let restored: AnchorData | null = null;
+      try {
+        const peekCopy = rawBytes.slice(0);
+        const pdfjsLib = await getPdfjs();
+        const peekDoc = await pdfjsLib.getDocument({ data: new Uint8Array(peekCopy) }).promise;
+        const meta = await peekDoc.getMetadata();
+        const subject: string | undefined = (meta?.info as { Subject?: string } | undefined)?.Subject;
+        restored = decodeMetadata(subject);
+        await peekDoc.destroy();
+      } catch {
+        restored = null;
+      }
+
+      if (restored?.hasGlossary) {
+        // Drop the glossary page so the rendered document matches anchor page numbers
+        workingBytes = await stripFirstPage(rawBytes);
+      }
+
+      const copy = workingBytes.slice(0);
+      const pdfjsLib = await getPdfjs();
+      const doc = await pdfjsLib.getDocument({ data: new Uint8Array(copy) }).promise;
+
+      setPdf(doc);
+      setPdfBytes(workingBytes);
+      setFileName(name);
+      setPage(1);
+      setZoom(1);
+      setSelectedBoxId(null);
+      setDraftBox(null);
+      setMode("view");
+
       if (restored) {
         setAnchors(restored);
         toast.success("Restored existing AnchorWrite tags from this PDF");
       } else {
         setAnchors(emptyAnchors());
       }
-    } catch {
-      setAnchors(emptyAnchors());
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not open this PDF");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file) return;
+
+    if (file.size > MAX_SIZE_BYTES) {
+      setSizeWarning(null);
+      toast.error("Files above 20 MB are currently unsupported for performance reasons.");
+      return;
+    }
+
+    if (file.size > WARN_SIZE_BYTES) {
+      setSizeWarning(
+        "Large PDFs may reduce performance. For best experience, use files under 10 MB.",
+      );
+    } else {
+      setSizeWarning(null);
+    }
+
     const buf = await file.arrayBuffer();
     await loadPdfFromBytes(buf, file.name);
-    e.target.value = "";
   };
 
   // Render page
