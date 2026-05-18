@@ -659,6 +659,22 @@ function AnchorWriteApp() {
           </div>
         </aside>
       </div>
+      <LoadingOverlay show={isLoading} />
+    </div>
+  );
+}
+
+function LoadingOverlay({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-border bg-background/95 px-6 py-5 shadow-lg">
+        <Loader2 className="h-5 w-5 animate-spin text-foreground" />
+        <div className="text-center">
+          <p className="text-sm font-medium">Loading PDF…</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Large PDFs may take longer.</p>
+        </div>
+      </div>
     </div>
   );
 }
