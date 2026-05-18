@@ -87,8 +87,7 @@ function AnchorWriteApp() {
     // Try to restore anchors from PDF metadata
     try {
       const meta = await doc.getMetadata();
-      // @ts-expect-error info is loosely typed
-      const subject: string | undefined = meta?.info?.Subject;
+      const subject: string | undefined = (meta?.info as { Subject?: string } | undefined)?.Subject;
       const restored = decodeMetadata(subject);
       if (restored) {
         setAnchors(restored);
