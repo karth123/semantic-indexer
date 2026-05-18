@@ -73,6 +73,7 @@ function AnchorWriteApp() {
   const loadPdfFromBytes = useCallback(async (bytes: ArrayBuffer, name: string) => {
     // pdf.js mutates the buffer; clone for safety
     const copy = bytes.slice(0);
+    const pdfjsLib = await getPdfjs();
     const doc = await pdfjsLib.getDocument({ data: new Uint8Array(copy) }).promise;
     setPdf(doc);
     setPdfBytes(bytes);
