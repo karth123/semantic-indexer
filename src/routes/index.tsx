@@ -216,15 +216,36 @@ function AnchorWriteApp() {
 
   // Box drawing handlers
   const drawing = useRef<{ startX: number; startY: number } | null>(null);
+  // Pan (hand-tool) handlers — active when mode === "view" and the user drags empty PDF area
+  const panning = useRef<{
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+  } | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
 
   const onOverlayMouseDown = (e: React.MouseEvent) => {
-    if (mode !== "box" || !overlayRef.current) return;
-    const rect = overlayRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    drawing.current = { startX: x, startY: y };
-    setDraftBox({ x, y, w: 0, h: 0 });
-    setSelectedBoxId(null);
+    if (mode === "box") {
+      if (!overlayRef.current) return;
+      const rect = overlayRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      drawing.current = { startX: x, startY: y };
+      setDraftBox({ x, y, w: 0, h: 0 });
+      setSelectedBoxId(null);
+      return;
+    }
+    // View mode → start panning the scroll container
+    if (!containerRef.current) return;
+    panning.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollLeft: containerRef.current.scrollLeft,
+      scrollTop: containerRef.current.scrollTop,
+    };
+    setIsPanning(true);
+    e.preventDefault();
   };
 
   const onOverlayMouseMove = (e: React.MouseEvent) => {
