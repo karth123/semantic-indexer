@@ -135,13 +135,13 @@ function AnchorWriteApp() {
 
     if (file.size > MAX_SIZE_BYTES) {
       setSizeWarning(null);
-      toast.error("Files above 20 MB are currently unsupported for performance reasons.");
+      toast.error("Files above 100 MB are currently unsupported for performance reasons.");
       return;
     }
 
     if (file.size > WARN_SIZE_BYTES) {
       setSizeWarning(
-        "Large PDFs may reduce performance. For best experience, use files under 10 MB.",
+        "Large PDFs may reduce performance. For best experience, use files under 25 MB.",
       );
     } else {
       setSizeWarning(null);
