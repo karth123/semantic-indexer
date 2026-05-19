@@ -385,9 +385,7 @@ function AnchorWriteApp() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70 px-4 py-2">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-2 mr-2">
-            <div className="h-6 w-6 rounded-md bg-foreground text-background flex items-center justify-center font-semibold text-[11px]">
-              A
-            </div>
+            <BrandMark size={24} />
             <span className="text-sm font-semibold tracking-tight hidden sm:inline">
               AnchorWrite
             </span>
