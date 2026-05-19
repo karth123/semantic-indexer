@@ -247,61 +247,6 @@ export async function exportTaggedPdf(
   );
   y -= 28;
 
-  // ---- GitHub Star CTA ----
-  const ctaX = marginX;
-  const ctaY = y;
-  const ctaWidth = W - marginX * 2;
-  const ctaHeight = 64;
-
-  glossary.drawRectangle({
-    x: ctaX,
-    y: ctaY - ctaHeight + 12,
-    width: ctaWidth,
-    height: ctaHeight,
-    color: rgb(0.07, 0.07, 0.09),
-  });
-
-  glossary.drawText("⭐ Star our GitHub repository", {
-    x: ctaX + 18,
-    y: ctaY - 8,
-    size: 18,
-    font: helvBold,
-    color: rgb(1, 1, 1),
-  });
-
-  glossary.drawText(
-    "Support AnchorWrite and follow future development updates.",
-    {
-      x: ctaX + 18,
-      y: ctaY - 28,
-      size: 10,
-      font: helv,
-      color: rgb(0.86, 0.86, 0.9),
-    },
-  );
-
-  glossary.drawText(BRAND_GITHUB, {
-    x: ctaX + 18,
-    y: ctaY - 45,
-    size: 10,
-    font: helv,
-    color: rgb(0.55, 0.8, 1),
-  });
-
-  addUriLink(
-    pdfDoc,
-    glossary,
-    [
-      ctaX,
-      ctaY - ctaHeight + 12,
-      ctaX + ctaWidth,
-      ctaY + 12,
-    ],
-    BRAND_GITHUB,
-  );
-
-  y -= 88;
-
   // Hidden marker text so future imports can confirm provenance
   glossary.drawText("ANCHORWRITE_GLOSSARY_PAGE", {
     x: 2,
