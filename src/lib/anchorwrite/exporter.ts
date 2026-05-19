@@ -174,21 +174,43 @@ export async function exportTaggedPdf(
     color: rgb(0.07, 0.07, 0.09),
   });
 
-  // Brand mark (small "A" square)
-  glossary.drawRectangle({
-    x: marginX,
-    y: H - 86,
-    width: 22,
-    height: 22,
-    color: rgb(0.07, 0.07, 0.09),
-  });
-  glossary.drawText("A", {
-    x: marginX + 6.5,
-    y: H - 81,
-    size: 13,
-    font: helvBold,
-    color: rgb(1, 1, 1),
-  });
+  // Brand mark — try to embed /icon.png if user supplied one, otherwise
+  // fall back to a small "A" tile so exports always look intentional.
+  let brandEmbedded = false;
+  try {
+    const res = await fetch("/icon.png", { cache: "no-cache" });
+    if (res.ok) {
+      const buf = await res.arrayBuffer();
+      const img = await pdfDoc.embedPng(buf).catch(() => null);
+      if (img) {
+        glossary.drawImage(img, {
+          x: marginX,
+          y: H - 86,
+          width: 22,
+          height: 22,
+        });
+        brandEmbedded = true;
+      }
+    }
+  } catch {
+    /* ignore — fall back to letter tile */
+  }
+  if (!brandEmbedded) {
+    glossary.drawRectangle({
+      x: marginX,
+      y: H - 86,
+      width: 22,
+      height: 22,
+      color: rgb(0.07, 0.07, 0.09),
+    });
+    glossary.drawText("A", {
+      x: marginX + 6.5,
+      y: H - 81,
+      size: 13,
+      font: helvBold,
+      color: rgb(1, 1, 1),
+    });
+  }
   glossary.drawText("AnchorWrite", {
     x: marginX + 32,
     y: H - 80,
