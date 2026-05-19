@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BrandMark } from "@/components/anchorwrite/BrandMark";
 import {
   Upload,
   ChevronLeft,
