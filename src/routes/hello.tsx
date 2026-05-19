@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/anchorwrite/BrandMark";
 import {
   ArrowRight,
   Tag,
@@ -163,9 +164,7 @@ function HelloPage() {
       {/* Top bar */}
       <header className="border-b border-border px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-md bg-foreground text-background flex items-center justify-center font-semibold text-sm">
-            A
-          </div>
+          <BrandMark size={28} />
           <span className="font-semibold tracking-tight">AnchorWrite</span>
         </div>
         <Link

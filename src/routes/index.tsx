@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BrandMark } from "@/components/anchorwrite/BrandMark";
 import {
   Upload,
   ChevronLeft,
@@ -342,9 +343,7 @@ function AnchorWriteApp() {
         <Toaster />
         <header className="border-b border-border px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-md bg-foreground text-background flex items-center justify-center font-semibold text-sm">
-              A
-            </div>
+            <BrandMark size={28} />
             <span className="font-semibold tracking-tight">AnchorWrite</span>
           </div>
         </header>
@@ -386,9 +385,7 @@ function AnchorWriteApp() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/70 px-4 py-2">
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-2 mr-2">
-            <div className="h-6 w-6 rounded-md bg-foreground text-background flex items-center justify-center font-semibold text-[11px]">
-              A
-            </div>
+            <BrandMark size={24} />
             <span className="text-sm font-semibold tracking-tight hidden sm:inline">
               AnchorWrite
             </span>
