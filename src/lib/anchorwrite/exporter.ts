@@ -508,7 +508,7 @@ function drawFooter(
     pdfDoc,
     page,
     [rx - (iconSize + 4), ry - 2, rx + wsWidth, ry + linkFontSize + 2],
-    `https://${websiteText}`,
+    `${websiteText}`,
   );
 
   rx += wsWidth + gap;
