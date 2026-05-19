@@ -21,7 +21,7 @@ export const Route = createFileRoute("/hello")({
       {
         name: "description",
         content:
-          "AnchorWrite makes your scanned handwritten PDFs searchable — locally, in your browser.",
+          "AnchorWrite makes your scanned handwritten PDFs searchable.",
       },
     ],
   }),
@@ -180,14 +180,14 @@ function HelloPage() {
         <section className="px-6 pt-16 pb-12 max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
             <Sparkles className="h-3 w-3" />
-            Local-first · Browser-native · No accounts
+            Local · Client-Side · No accounts
           </div>
           <h1 className="mt-6 text-4xl sm:text-5xl font-semibold tracking-tight">
             Welcome to AnchorWrite
           </h1>
           <p className="mt-5 text-base text-muted-foreground leading-relaxed max-w-xl mx-auto">
-            A lightweight semantic search layer for your handwritten PDFs.
-            Tag pages and regions, export a normal PDF, and use Ctrl+F to navigate notes you'd otherwise never find again.
+            A lightweight search layer for your handwritten PDFs.
+            Tag pages and regions with search keywords, export a normal PDF, and use Ctrl+F to navigate using those keywords.
           </p>
 
           <div className="mt-8 inline-flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-4 py-2.5 text-sm">
@@ -230,19 +230,19 @@ function HelloPage() {
               How AnchorWrite works
             </h2>
             <p className="mt-2 text-sm text-muted-foreground text-center max-w-xl mx-auto">
-              You write by hand. AnchorWrite gives those pages a memory.
+              Handwritten Notes become searchable using Ctrl-F.
             </p>
 
             <div className="mt-10 space-y-8">
               <Step
                 icon={<FileText className="h-4 w-4" />}
-                title="1. Upload your scanned PDF"
-                body="Drop in a scan of your handwritten notes, lecture notebook, sketchbook, or journal. Everything stays in your browser — your file is never uploaded to a server."
+                title="1. Upload a scanned PDF"
+                body="Drop in a scan of your handwritten notes, lecture notebook, sketchbook, or journal. Your file is never uploaded to a server."
               />
               <Step
                 icon={<Tag className="h-4 w-4" />}
-                title="2. Tag pages with what they're about"
-                body="Open a page, switch to Page tags, and add a few short keywords describing its content. These are semantic anchors — not transcriptions. You decide what the page should be findable as."
+                title="2. Tag pages with keywords."
+                body="Open a page, switch to Page tags, and add a few short keywords which you feel will help you find the page when you review your notes. These are semantic anchors. You use them to find your page later."
               />
               <Step
                 icon={<SquareDashed className="h-4 w-4" />}
@@ -252,17 +252,17 @@ function HelloPage() {
               <Step
                 icon={<Search className="h-4 w-4" />}
                 title="4. Export and use Ctrl+F anywhere"
-                body="Export a normal PDF. The visuals are byte-identical to your original — handwriting untouched. But Ctrl+F in any PDF reader will now jump to the pages and regions you tagged."
+                body="Export a normal PDF. Your notes remain unchanged. But Ctrl+F in any PDF reader will now jump to the pages and regions you tagged."
               />
               <Step
                 icon={<FileText className="h-4 w-4" />}
                 title="5. A glossary you can navigate"
-                body="Every export gets a clean glossary page listing all your tags with clickable links to their pages and regions. Think of it as a semantic table of contents that travels with the file."
+                body="Every export gets an AnchorWrite glossary page listing all your tags with clickable links to their pages and regions. Think of it as a semantic table of contents."
               />
               <Step
                 icon={<Shield className="h-4 w-4" />}
                 title="Privacy by design"
-                body="No accounts. No uploads. No analytics on your documents. AnchorWrite is a static web app — it runs entirely in your browser, and your PDFs never leave your machine."
+                body="No accounts. No uploads to a server. No analytics on your documents. AnchorWrite is a static web app — it runs entirely in your browser, and your PDFs never leave your browser."
               />
             </div>
           </div>
