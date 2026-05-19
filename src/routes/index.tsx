@@ -26,8 +26,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 
-const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB hard limit
-const WARN_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB warning
+const MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB hard limit
+const WARN_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB warning
 
 export const Route = createFileRoute("/")({
   component: AnchorWriteApp,
@@ -135,13 +135,13 @@ function AnchorWriteApp() {
 
     if (file.size > MAX_SIZE_BYTES) {
       setSizeWarning(null);
-      toast.error("Files above 20 MB are currently unsupported for performance reasons.");
+      toast.error("Files above 100 MB are currently unsupported for performance reasons.");
       return;
     }
 
     if (file.size > WARN_SIZE_BYTES) {
       setSizeWarning(
-        "Large PDFs may reduce performance. For best experience, use files under 10 MB.",
+        "Large PDFs may reduce performance. For best experience, use files under 25 MB.",
       );
     } else {
       setSizeWarning(null);
@@ -364,7 +364,7 @@ function AnchorWriteApp() {
               <input type="file" accept="application/pdf" className="hidden" onChange={onFileChange} />
             </label>
             <p className="mt-4 text-xs text-muted-foreground">
-              Everything runs locally in your browser. Files up to 20 MB.
+              Everything runs locally in your browser. Files up to 100 MB.
             </p>
             {sizeWarning && (
               <div className="mt-4 inline-flex items-start gap-2 rounded-md border border-border bg-muted/50 px-3 py-2 text-xs text-muted-foreground text-left">
