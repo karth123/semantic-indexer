@@ -326,6 +326,11 @@ export async function exportTaggedPdf(
     const rightX = W - marginX;
     const linkColor = rgb(0.12, 0.35, 0.78);
     let glossaryPageIndex = 0;
+    const entriesPerPage = Math.floor((H - 90 - 80) / lineH);
+    const totalGlossaryPages = Math.max(
+      1,
+      Math.ceil(entries.length / entriesPerPage),
+    );
 
     for (const entry of entries) {
       // create new glossary page if current page is full
@@ -408,7 +413,7 @@ export async function exportTaggedPdf(
         });
     
         // Hyperlink annotation
-        const glossaryPageCount = glossaryPageIndex + 1;
+        const glossaryPageCount = totalGlossaryPages;
         const pagesAfter = pdfDoc.getPages();
         const destPageIdx = loc.page + glossaryPageCount - 1;
     
