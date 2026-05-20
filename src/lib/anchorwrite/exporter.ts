@@ -160,7 +160,7 @@ export async function exportTaggedPdf(
 
   // ---- Build & prepend the glossary page ----
   const entries = buildGlossary(anchors);
-  const glossary = pdfDoc.insertPage(0, [612, 792]);
+  let glossary = pdfDoc.insertPage(0, [612, 792]);
   const W = glossary.getWidth();
   const H = glossary.getHeight();
   const marginX = 56;
@@ -328,11 +328,31 @@ export async function exportTaggedPdf(
     const linkColor = rgb(0.12, 0.35, 0.78);
 
     for (const entry of entries) {
-      if (y < 90) break; // leave room for footer
-
+      // create new glossary page if current page is full
+      if (y < 90) {
+        drawFooter(pdfDoc, glossary, helv, helvBold, marginX);
+    
+        glossary = pdfDoc.insertPage(
+          pdfDoc.getPageCount(),
+          [612, 792],
+        );
+    
+        y = H - 80;
+    
+        glossary.drawText("Glossary (continued)", {
+          x: marginX,
+          y,
+          size: 20,
+          font: helvBold,
+          color: rgb(0.07, 0.07, 0.09),
+        });
+    
+        y -= 32;
+      }
+    
       const tag = entry.tag;
       const tagWidth = helv.widthOfTextAtSize(tag, fontSize);
-
+    
       glossary.drawText(tag, {
         x: marginX,
         y,
@@ -340,23 +360,28 @@ export async function exportTaggedPdf(
         font: helvBold,
         color: rgb(0.1, 0.1, 0.12),
       });
-
+    
       // Render each location right-aligned, separated by " · "
       const sep = "  ·  ";
       const sepWidth = helv.widthOfTextAtSize(sep, fontSize);
-      // Compute total width
-      const widths = entry.locations.map((l) => helv.widthOfTextAtSize(l.label, fontSize));
+    
+      const widths = entry.locations.map((l) =>
+        helv.widthOfTextAtSize(l.label, fontSize),
+      );
+    
       const totalWidth =
         widths.reduce((a, b) => a + b, 0) +
         Math.max(0, entry.locations.length - 1) * sepWidth;
-
+    
       let cursorX = rightX - totalWidth;
-
+    
       // Dotted leader
       const dotsStart = marginX + tagWidth + 6;
       const dotsEnd = cursorX - 6;
+    
       if (dotsEnd > dotsStart) {
         const dotSpacing = 4;
+    
         for (let dx = dotsStart; dx < dotsEnd; dx += dotSpacing) {
           glossary.drawText(".", {
             x: dx,
@@ -367,10 +392,11 @@ export async function exportTaggedPdf(
           });
         }
       }
-
+    
       for (let li = 0; li < entry.locations.length; li++) {
         const loc = entry.locations[li];
         const w = widths[li];
+    
         glossary.drawText(loc.label, {
           x: cursorX,
           y,
@@ -378,16 +404,19 @@ export async function exportTaggedPdf(
           font: helv,
           color: linkColor,
         });
-
+    
         // Hyperlink annotation
-        const destPageIdx = loc.page; // glossary added at 0, so original page N is at idx N
+        const destPageIdx = loc.page;
+    
         if (destPageIdx >= 1 && destPageIdx < pagesAfter.length) {
           const destPage = pagesAfter[destPageIdx];
           const destHeight = destPage.getSize().height;
+    
           const destY =
             loc.yNorm !== undefined
               ? Math.max(0, destHeight - loc.yNorm * destHeight + 20)
-              : destHeight; // top of page
+              : destHeight;
+    
           addInternalLink(
             pdfDoc,
             glossary,
@@ -396,8 +425,9 @@ export async function exportTaggedPdf(
             destY,
           );
         }
-
+    
         cursorX += w;
+    
         if (li < entry.locations.length - 1) {
           glossary.drawText(sep, {
             x: cursorX,
@@ -406,10 +436,11 @@ export async function exportTaggedPdf(
             font: helv,
             color: rgb(0.55, 0.55, 0.6),
           });
+    
           cursorX += sepWidth;
         }
       }
-
+    
       y -= lineH;
     }
   }
