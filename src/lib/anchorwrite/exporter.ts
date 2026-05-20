@@ -311,7 +311,6 @@ export async function exportTaggedPdf(
     opacity: 0,
   });
 
-  const pagesAfter = pdfDoc.getPages(); // index 0 = glossary, index N = original page N
 
   if (entries.length === 0) {
     glossary.drawText("No tags have been added yet.", {
@@ -409,7 +408,9 @@ export async function exportTaggedPdf(
         });
     
         // Hyperlink annotation
-        const destPageIdx = loc.page;
+        const glossaryPageCount = glossaryPageIndex + 1;
+        const pagesAfter = pdfDoc.getPages();
+        const destPageIdx = loc.page + glossaryPageCount - 1;
     
         if (destPageIdx >= 1 && destPageIdx < pagesAfter.length) {
           const destPage = pagesAfter[destPageIdx];
