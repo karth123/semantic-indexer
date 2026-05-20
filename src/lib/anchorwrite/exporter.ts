@@ -326,14 +326,17 @@ export async function exportTaggedPdf(
     const fontSize = 10;
     const rightX = W - marginX;
     const linkColor = rgb(0.12, 0.35, 0.78);
+    let glossaryPageIndex = 0;
 
     for (const entry of entries) {
       // create new glossary page if current page is full
       if (y < 90) {
         drawFooter(pdfDoc, glossary, helv, helvBold, marginX);
     
+        glossaryPageIndex += 1;
+
         glossary = pdfDoc.insertPage(
-          pdfDoc.getPageCount(),
+          glossaryPageIndex,
           [612, 792],
         );
     
