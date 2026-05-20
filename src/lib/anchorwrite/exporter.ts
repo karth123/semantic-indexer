@@ -118,9 +118,7 @@ export async function exportTaggedPdf(
 ): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.load(originalBytes, { updateMetadata: false });
 
-  if (anchors.hasGlossary && pdfDoc.getPageCount() > 0) {
-    pdfDoc.removePage(0);
-  }
+  
 
   const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helvBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -411,7 +409,7 @@ export async function exportTaggedPdf(
         // Hyperlink annotation
         const glossaryPageCount = pdfDoc.getPageCount() - pages.length;
         const destPageIdx = loc.page + glossaryPageCount - 1; 
-        
+
         if (destPageIdx >= 1 && destPageIdx < pagesAfter.length) {
           const destPage = pagesAfter[destPageIdx];
           const destHeight = destPage.getSize().height;
